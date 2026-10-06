@@ -6,7 +6,10 @@ from config import MONGODB_URI
 
 # Ensure data directory exists
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-os.makedirs(DATA_DIR, exist_ok=True)
+try:
+    os.makedirs(DATA_DIR, exist_ok=True)
+except Exception:
+    pass
 DB_FILE = os.path.join(DATA_DIR, "db.json")
 
 SEED_VEHICLES = [
@@ -496,8 +499,11 @@ class LocalJSONDatabase:
                 self._save()
 
     def _save(self):
-        with open(self.file_path, "w") as f:
-            json.dump(self.data, f, indent=2)
+        try:
+            with open(self.file_path, "w") as f:
+                json.dump(self.data, f, indent=2)
+        except Exception:
+            pass
 
     def get_collection(self, name):
         if name not in self.data:
@@ -581,6 +587,18 @@ class LocalCollection:
 
 # Global DB instance
 local_db = LocalJSONDatabase(DB_FILE)
+_mongo_db = None
+
+if MONGODB_URI:
+    try:
+        from pymongo import MongoClient
+        _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        _db_name = MONGODB_URI.split("/")[-1].split("?")[0] or "vrm_db"
+        _mongo_db = _client[_db_name]
+    except Exception as e:
+        print(f"MongoDB connection warning: {e}, falling back to local JSON database.")
 
 def get_db():
+    if _mongo_db is not None:
+        return _mongo_db
     return local_db

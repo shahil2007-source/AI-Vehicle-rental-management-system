@@ -26,6 +26,7 @@ app.include_router(auth_routes.router)
 app.include_router(admin.router)
 
 @app.get("/")
+@app.get("/api")
 def read_root():
     return {
         "status": "online",
