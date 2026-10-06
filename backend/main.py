@@ -34,14 +34,19 @@ app.include_router(ai.router)
 app.include_router(auth_routes.router)
 app.include_router(admin.router)
 
+from database import init_db
+
 @app.get("/")
 @app.get("/api")
 def read_root():
+    db = init_db()
+    from database import db_status_message
     return {
         "status": "online",
         "app": "AI Vehicle Rental Management System",
         "agent": "AI Vehicle Rental Agent v2.4 (6 Tools Active)",
         "currency": "₹ (INR)",
+        "database": db_status_message,
         "docs": "/docs"
     }
 

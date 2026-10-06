@@ -585,20 +585,98 @@ class LocalCollection:
         return len(self.find(query))
 
 
-# Global DB instance
-local_db = LocalJSONDatabase(DB_FILE)
-_mongo_db = None
+class MongoCollectionWrapper:
+    def __init__(self, collection):
+        self.collection = collection
 
-if MONGODB_URI:
-    try:
-        from pymongo import MongoClient
-        _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
-        _db_name = MONGODB_URI.split("/")[-1].split("?")[0] or "vrm_db"
-        _mongo_db = _client[_db_name]
-    except Exception as e:
-        print(f"MongoDB connection warning: {e}, falling back to local JSON database.")
+    def find(self, query=None):
+        q = query or {}
+        return list(self.collection.find(q))
+
+    def find_one(self, query):
+        q = query or {}
+        return self.collection.find_one(q)
+
+    def insert_one(self, doc):
+        doc_copy = dict(doc)
+        if "_id" not in doc_copy:
+            doc_copy["_id"] = str(uuid.uuid4())
+        self.collection.insert_one(doc_copy)
+        return doc_copy
+
+    def update_one(self, query, update):
+        res = self.collection.update_one(query or {}, update)
+        return res.modified_count > 0
+
+    def delete_one(self, query):
+        res = self.collection.delete_one(query or {})
+        return res.deleted_count > 0
+
+    def count_documents(self, query=None):
+        return self.collection.count_documents(query or {})
+
+
+class MongoDatabaseWrapper:
+    def __init__(self, db):
+        self.db = db
+
+    def get_collection(self, name):
+        return MongoCollectionWrapper(self.db[name])
+
+
+active_db = None
+db_status_message = ""
+
+def init_db():
+    global active_db, db_status_message
+    if active_db is not None:
+        return active_db
+
+    if MONGODB_URI and MONGODB_URI.strip():
+        try:
+            from pymongo import MongoClient
+            client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+            client.admin.command('ping')
+            db_name = MONGODB_URI.split("/")[-1].split("?")[0] or "vrm_db"
+            raw_db = client[db_name]
+            mongo_wrapper = MongoDatabaseWrapper(raw_db)
+
+            # Auto-seed MongoDB Atlas if vehicle collection is empty
+            vehicles_col = mongo_wrapper.get_collection("vehicles")
+            v_count = vehicles_col.count_documents({})
+            if v_count == 0:
+                print("[DATABASE SETUP] MongoDB Atlas connected to empty database. Auto-seeding 15+ vehicles...")
+                for v in SEED_VEHICLES:
+                    vehicles_col.insert_one(dict(v))
+                users_col = mongo_wrapper.get_collection("users")
+                if users_col.count_documents({}) == 0:
+                    for u in SEED_USERS:
+                        users_col.insert_one(dict(u))
+                bookings_col = mongo_wrapper.get_collection("bookings")
+                if bookings_col.count_documents({}) == 0:
+                    for b in SEED_BOOKINGS:
+                        bookings_col.insert_one(dict(b))
+                v_count = vehicles_col.count_documents({})
+
+            u_count = mongo_wrapper.get_collection("users").count_documents({})
+            b_count = mongo_wrapper.get_collection("bookings").count_documents({})
+
+            active_db = mongo_wrapper
+            db_status_message = f"[DATABASE STATUS] MongoDB Atlas connected successfully to database '{db_name}'. (Vehicles: {v_count}, Users: {u_count}, Bookings: {b_count})"
+            print(db_status_message)
+            return active_db
+        except Exception as e:
+            print(f"[DATABASE STATUS WARNING] Failed to connect to MongoDB Atlas ({e}). Falling back to local JSON database.")
+
+    # Local JSON fallback engine
+    local_db = LocalJSONDatabase(DB_FILE)
+    v_count = local_db.get_collection("vehicles").count_documents({})
+    u_count = local_db.get_collection("users").count_documents({})
+    b_count = local_db.get_collection("bookings").count_documents({})
+    active_db = local_db
+    db_status_message = f"[DATABASE STATUS] Local JSON Database engine active. (Vehicles: {v_count}, Users: {u_count}, Bookings: {b_count})"
+    print(db_status_message)
+    return active_db
 
 def get_db():
-    if _mongo_db is not None:
-        return _mongo_db
-    return local_db
+    return init_db()
