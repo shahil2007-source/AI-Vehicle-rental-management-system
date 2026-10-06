@@ -21,10 +21,9 @@ Make sure the following environment variables are configured in your production 
 | Variable | Description | Example / Default |
 |---|---|---|
 | `GEMINI_API_KEY` | Google Gemini API Key for AI Agent | `AIzaSy...` (Leaves fallback RAG active if blank) |
-| `MONGODB_URI` | MongoDB Connection String | `mongodb+srv://user:pass@cluster.mongodb.net/vrm_db` |
+| `MONGODB_URI` | MongoDB Atlas Connection String | `mongodb+srv://user:pass@cluster.mongodb.net/vrm_db` |
 | `JWT_SECRET` | Secret key for signing JWT tokens | `super-secret-vrm-ai-jwt-key-2026` |
-| `PORT` | Dynamic port set by hosting provider | `8000` (Backend) / `80` (Frontend) |
-| `VITE_API_URL` | Frontend API Base URL | `https://your-backend.onrender.com/api` |
+| `PORT` | Dynamic port set by hosting provider | `8000` (Backend local) |
 
 ---
 

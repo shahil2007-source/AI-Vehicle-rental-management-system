@@ -1,0 +1,14 @@
+{
+  "name": "ai-vehicle-rental-management-system",
+  "private": true,
+  "version": "2.4.0",
+  "description": "AI-Powered Vehicle Rental Management System with React Frontend and FastAPI Backend",
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "cd backend && uvicorn main:app --reload --port 8000"
+  },
+  "devDependencies": {
+    "vercel": "^39.3.0"
+  }
+}

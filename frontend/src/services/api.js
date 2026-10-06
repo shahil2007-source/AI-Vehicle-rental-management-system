@@ -1,52 +1,31 @@
 import axios from 'axios';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "");
-const baseURL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+// Support both local development (http://localhost:8000/api or Vite proxy) and production (/api)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-const API = axios.create({
-  baseURL,
+const api = axios.create({
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add JWT Token interceptor
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('vrm_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Health Check API
+export const checkHealth = async () => {
+  try {
+    const response = await api.get('/health');
+    return response.data;
+  } catch (error) {
+    console.error('API Health check failed:', error);
+    return { status: 'offline', error: error.message };
   }
-  return config;
-});
-
-export const vehicleService = {
-  getVehicles: (params) => API.get('/vehicles', { params }),
-  getVehicleById: (id) => API.get(`/vehicles/${id}`),
-  createVehicle: (data) => API.post('/vehicles', data),
-  updateVehicle: (id, data) => API.put(`/vehicles/${id}`, data),
-  deleteVehicle: (id) => API.delete(`/vehicles/${id}`),
 };
 
-export const bookingService = {
-  createBooking: (data) => API.post('/bookings', data),
-  getUserBookings: (email) => API.get('/bookings', { params: { email } }),
-  getBookingById: (id) => API.get(`/bookings/${id}`),
-  updateBookingStatus: (id, status) => API.put(`/bookings/${id}/status`, null, { params: { status } }),
+// Vehicles API
+export const fetchVehicles = async (category) => {
+  const params = category ? { category } : {};
+  const response = await api.get('/vehicles', { params });
+  return response.data;
 };
 
-export const aiService = {
-  findRecommendation: (data) => API.post('/ai/recommend', data),
-  chat: (message, selectedVehicleId = null) => API.post('/ai/chat', { message, selectedVehicleId }),
-};
-
-export const authService = {
-  register: (data) => API.post('/auth/register', data),
-  login: (data) => API.post('/auth/login', data),
-  getMe: () => API.get('/auth/me'),
-};
-
-export const adminService = {
-  getStats: () => API.get('/admin/dashboard-stats'),
-};
-
-export default API;
+export default api;

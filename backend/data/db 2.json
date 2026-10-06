@@ -510,20 +510,20 @@
   ],
   "users": [
     {
-      "_id": "u_admin_shahil",
+      "_id": "fcf0bc3e-4127-4edd-9508-a9445e514b69",
       "name": "Shahil Tankala (Admin)",
       "email": "tshahil2007@gmail.com",
       "phone": "+91 98765 43210",
-      "password": "$2b$12$.VduUJ08PVd8KqNrQPQX7ODJJyoynHQGQwb05YXhQIKO7fYCjNsLW",
+      "password": "$2b$12$TJICVwrZGY3TtYQy6Bj35uP5.mI1CQpgQax9RSpoJmWgDllWeXv9e",
       "role": "admin",
-      "createdAt": "2026-01-01T00:00:00Z"
+      "createdAt": "2026-10-05T09:59:57.061940"
     },
     {
       "_id": "u1",
       "name": "Admin User",
       "email": "admin@vrm.com",
       "phone": "+91 98765 43210",
-      "password": "$2b$12$yzUAzbBE3JGPgw0JNQNymuDctunSZB8pXjmScpq3G2hk8XmkiHMCK",
+      "password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW",
       "role": "admin",
       "createdAt": "2026-01-01T00:00:00Z"
     },
@@ -532,7 +532,7 @@
       "name": "Rahul Sharma",
       "email": "user@vrm.com",
       "phone": "+91 91234 56789",
-      "password": "$2b$12$yzUAzbBE3JGPgw0JNQNymuDctunSZB8pXjmScpq3G2hk8XmkiHMCK",
+      "password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW",
       "role": "customer",
       "createdAt": "2026-02-15T10:30:00Z"
     }
@@ -559,7 +559,7 @@
       "tax": 2052,
       "additionalCharges": 500,
       "totalAmount": 15002,
-      "status": "Confirmed",
+      "status": "Active",
       "createdAt": "2026-10-01T14:20:00Z"
     }
   ],

@@ -1,56 +1,69 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import vehicles, bookings, ai, auth_routes, admin
+from config import settings
+from database import check_db_health
+from routes import auth, vehicles, bookings, ai, admin
 
 app = FastAPI(
-    title="AI Vehicle Rental Management System API",
-    description="Backend API powered by AI Agent, 6 Tools, and MongoDB / File Database",
-    version="2.4.0"
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    description="Backend API for AI Vehicle Rental Management System"
 )
 
+# CORS setup
 origins = [
-    "https://ai-vehicle-rental-management-system.vercel.app",
     "http://localhost:5173",
-    "http://localhost:3000",
     "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 if os.getenv("FRONTEND_URL"):
     origins.append(os.getenv("FRONTEND_URL").rstrip("/"))
 
+if os.getenv("VERCEL_URL"):
+    origins.append(f"https://{os.getenv('VERCEL_URL')}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register routers
-app.include_router(vehicles.router)
-app.include_router(bookings.router)
-app.include_router(ai.router)
-app.include_router(auth_routes.router)
-app.include_router(admin.router)
+# Health endpoint (both /api/health and /health for Vercel/direct access)
+@app.get("/health")
+@app.get("/api/health")
+def health_check():
+    db_status = check_db_health()
+    return {
+        "status": "healthy",
+        "service": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "database": db_status
+    }
 
-from database import init_db
-
+# Root info endpoint
 @app.get("/")
 @app.get("/api")
-def read_root():
-    db = init_db()
-    from database import db_status_message
+def root_info():
     return {
-        "status": "online",
-        "app": "AI Vehicle Rental Management System",
-        "agent": "AI Vehicle Rental Agent v2.4 (6 Tools Active)",
-        "currency": "₹ (INR)",
-        "database": db_status_message,
+        "service": settings.PROJECT_NAME,
+        "status": "running",
+        "health_check": "/api/health",
         "docs": "/docs"
     }
 
+# Register routers with /api prefix
+app.include_router(auth.router, prefix="/api")
+app.include_router(vehicles.router, prefix="/api")
+app.include_router(bookings.router, prefix="/api")
+app.include_router(ai.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
+
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run("main:app", host="0.0.0.0", port=settings.PORT, reload=True)
