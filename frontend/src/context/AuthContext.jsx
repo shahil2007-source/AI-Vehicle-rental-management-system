@@ -1,52 +1,31 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/api';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('vrm_user');
-    return saved ? JSON.parse(saved) : null;
+    const saved = localStorage.getItem('user_data');
+    return saved ? JSON.parse(saved) : { id: 'usr_demo', full_name: 'Rahul Sharma', email: 'rahul@example.com', role: 'user' };
   });
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('vrm_token');
-    if (token) {
-      authService.getMe()
-        .then((res) => {
-          setUser(res.data);
-          localStorage.setItem('vrm_user', JSON.stringify(res.data));
-        })
-        .catch(() => {
-          logout();
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  const [token, setToken] = useState(() => localStorage.getItem('access_token') || 'demo_jwt_token');
 
-  const login = (token, userData) => {
-    localStorage.setItem('vrm_token', token);
-    localStorage.setItem('vrm_user', JSON.stringify(userData));
+  const login = (userData, authToken) => {
     setUser(userData);
+    setToken(authToken);
+    localStorage.setItem('user_data', JSON.stringify(userData));
+    localStorage.setItem('access_token', authToken);
   };
 
   const logout = () => {
-    localStorage.removeItem('vrm_token');
-    localStorage.removeItem('vrm_user');
     setUser(null);
-  };
-
-  const updateUser = (updatedData) => {
-    const newObj = { ...user, ...updatedData };
-    setUser(newObj);
-    localStorage.setItem('vrm_user', JSON.stringify(newObj));
+    setToken(null);
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('access_token');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, loading, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

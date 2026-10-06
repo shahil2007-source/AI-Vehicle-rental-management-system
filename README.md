@@ -1,173 +1,250 @@
 # AI Vehicle Rental Management System
 
-> **College Project**: Fundamentals of AI (College Project Submission)  
-> **Platform**: Production-Style Full-Stack AI Vehicle Rental Platform  
-> **Currency**: Indian Rupees (₹ INR)  
+An intelligent full-stack vehicle rental management application built for college **Fundamentals of AI** evaluation. The project features a multi-tool **AI Vehicle Rental Agent** powered by **Google Gemini LLM**, deterministic compatibility scoring, MongoDB Atlas persistence, and a single Vercel monorepo deployment setup.
 
 ---
 
-## 🚗 Project Overview
-
-The **AI Vehicle Rental Management System** is a complete, intelligent vehicle rental platform built to address real-world vehicle rental decision-making. Instead of a basic static site or standard chatbot, this system incorporates a dedicated **Autonomous AI Vehicle Rental Agent** that executes **6 application tools**, performs multi-criteria compatibility scoring across live fleet data, calculates transparent rental pricing in **Indian Rupees (₹)**, and generates natural-language explanations for recommendations.
-
----
-
-## 🎯 Problem Statement
-
-Renting a vehicle involves complex tradeoffs: passenger count, luggage volume, daily budget, trip distance (fuel economy vs comfort), vehicle body type (SUV, MUV, Sedan, Hatchback), fuel preference, and date availability. Customers often waste time searching manually across vehicle catalogs without knowing which car is best suited for their specific journey.
-
-**Solution**: An AI Agent that autonomously retrieves candidate vehicles from a database, runs availability checks, calculates transparent cost breakdowns (Base rate + Insurance + GST + Fees), computes an 8-factor weighted compatibility score (0–100%), ranks top choices, explains its decision rationale, and generates instant bookings (`VRM-2026-XXXXX`).
+## 1. Project Overview
+The **AI Vehicle Rental Management System** replaces traditional static vehicle filtering with an intelligent AI Agent. Users input travel parameters (passengers, budget, distance, trip type, fuel, comfort preference), and the AI Agent dynamically invokes 6 distinct backend tools to search candidates, verify availability, calculate total costs, evaluate deterministic 8-factor compatibility scores, rank vehicles, and synthesize natural language rationale via Gemini LLM.
 
 ---
 
-## 🛠️ Technology Stack
+## 2. Problem Statement
+Traditional vehicle rental websites force users to manually filter through long vehicle listings without knowing:
+- Whether a vehicle truly fits their trip distance and passenger comfort.
+- Exact cost calculations combining daily rental rates and estimated travel mileage.
+- Objectively scored vehicle suitability for specific terrain (outstation highway vs city commute).
 
-| Layer | Technologies Used |
-|---|---|
-| **Frontend** | React 18, Vite, Tailwind CSS v4, Lucide React Icons, Recharts |
-| **Backend** | Python 3.13, FastAPI, Uvicorn, Pydantic v2, PyJWT, Passlib |
-| **Database** | MongoDB (Supported via PyMongo) + Built-in JSON Database Fallback Engine |
-| **AI / LLM** | Google Gemini API (`google-generativeai`) + Grounded DB RAG Engine |
-| **Authentication**| JWT Token Authentication + Passlib Password Hashing |
+Our system solves this by delegating decision-making to a multi-tool AI Agent that performs automated mathematical evaluation and delivers transparent, objective recommendations.
 
 ---
 
-## 🤖 The 6 AI Agent Tools
-
-The AI Agent orchestrates 6 separate tool functions:
-
-1. **Tool 1 — Vehicle Search Tool**: Queries the vehicle collection by body type, fuel type, seating capacity, location, and budget constraints.
-2. **Tool 2 — Availability Tool**: Checks pickup and return date windows against active customer bookings to eliminate date collisions.
-3. **Tool 3 — Budget Calculator Tool**: Calculates `Daily Rate × Duration Days`, adds standard insurance (₹350/day), 18% GST tax, and sanitization/GPS concierge fees in **₹ Indian Rupees**.
-4. **Tool 4 — Vehicle Matching Tool**: Calculates an 8-factor weighted compatibility score out of 100%:
-   - **Budget Match**: 25%
-   - **Passenger Match**: 20%
-   - **Vehicle Type Match**: 15%
-   - **Fuel Preference**: 10%
-   - **Trip Distance & Economy**: 10%
-   - **Comfort & Luggage**: 10%
-   - **Customer Rating**: 5%
-   - **Date Availability**: 5%
-5. **Tool 5 — Vehicle Recommendation Tool**: Ranks candidates and extracts the #1 Best Match along with 2–3 alternative options.
-6. **Tool 6 — Booking Tool**: Generates and persists the booking record with a unique identifier `VRM-2026-XXXXX`.
+## 3. Objectives
+1. **Solve Real-World Rental Challenges**: Provide dynamic, accurate vehicle recommendations tailored to travel requirements.
+2. **Multi-Tool AI Agent Architecture**: Integrate 6 backend tool functions callable by the agent workflow.
+3. **Deterministic Math Scoring**: Calculate a 0-100 compatibility score using 8 weighted factors (Budget 25%, Seats 20%, Type 15%, Fuel 10%, Distance 10%, Comfort 10%, Rating 5%, Availability 5%).
+4. **Gemini LLM Integration**: Synthesize clear, human-readable recommendation explanations without inventing scores.
+5. **Execution Transparency**: Log all agent execution traces in MongoDB for faculty presentation and demonstration.
+6. **Single Vercel Project Deployment**: Structure frontend (React Vite) and backend (FastAPI) under unified Vercel routing (`/` for React, `/api/*` for FastAPI).
 
 ---
 
-## 📐 System Architecture
-
-```text
-Customer Input
-   ↓
-Frontend UI (React + Vite + Tailwind CSS)
-   ↓
-Backend REST API (FastAPI)
-   ↓
-AI Vehicle Rental Agent Orchestrator
-   ↓
-┌──────────────────────────────────────────────┐
-│ Tool 1: Vehicle Search Tool                  │
-│ Tool 2: Availability Tool                    │
-│ Tool 3: Budget Calculator (₹ INR)            │
-│ Tool 4: Matching & Scoring Tool (0-100%)     │
-│ Tool 5: Recommendation Tool (Best + Alts)    │
-│ Tool 6: Booking Tool (VRM-2026-XXXXX)        │
-└──────────────────────┬───────────────────────┘
-                       ↓
-         Gemini LLM Engine (RAG Grounded)
-                       ↓
-          Database (MongoDB / JSON DB)
-                       ↓
-     Frontend Output (Scores, Costs & Booking)
+## 4. AI Agent Workflow
+The AI Agent executes the following sequential pipeline:
+```
+User Request 
+  ↳ AI Agent Engine 
+    ↳ Understand Requirements 
+      ↳ Tool #1: search_vehicles 
+        ↳ Tool #2: check_availability 
+          ↳ Tool #3: calculate_rental_cost 
+            ↳ Tool #4: calculate_compatibility (0-100 Score) 
+              ↳ Tool #5: recommend_vehicle (Rank & Select) 
+                ↳ Gemini LLM Synthesis 
+                  ↳ Tool #6: create_booking (Optional Reservation)
 ```
 
 ---
 
-## 🏎️ Seeded Vehicles Fleet (15+ Indian Models)
+## 5. AI Agent Tools (6 Active Tools)
 
-The system comes pre-seeded with realistic Indian market rental pricing (in ₹):
-
-1. **Toyota Innova Crysta** (MUV, 7 Seats, Diesel, ₹3,800/day)
-2. **Toyota Fortuner** (SUV, 7 Seats, Diesel, ₹6,500/day)
-3. **Kia Carens** (MUV, 7 Seats, Petrol, ₹3,200/day)
-4. **Kia Seltos** (SUV, 5 Seats, Petrol, ₹2,800/day)
-5. **Hyundai Creta** (SUV, 5 Seats, Diesel, ₹2,600/day)
-6. **Hyundai Alcazar** (SUV, 7 Seats, Diesel, ₹3,500/day)
-7. **Tata Nexon** (SUV, 5 Seats, Petrol, ₹2,200/day)
-8. **Tata Nexon EV** (Electric SUV, 5 Seats, Electric, ₹2,500/day)
-9. **Tata Harrier** (SUV, 5 Seats, Diesel, ₹3,400/day)
-10. **Mahindra XUV700** (SUV, 7 Seats, Diesel, ₹4,200/day)
-11. **Mahindra Scorpio-N** (SUV, 7 Seats, Diesel, ₹3,900/day)
-12. **Maruti Swift** (Hatchback, 5 Seats, Petrol, ₹1,500/day)
-13. **Maruti Baleno** (Hatchback, 5 Seats, Petrol, ₹1,700/day)
-14. **Honda City** (Sedan, 5 Seats, Petrol, ₹2,400/day)
-15. **MG Hector** (SUV, 5 Seats, Petrol, ₹3,100/day)
+1. `search_vehicles`: Queries MongoDB Atlas / dataset for candidates matching passenger count, budget caps, and category preferences.
+2. `check_availability`: Verifies booking date conflicts against existing database reservations.
+3. `calculate_rental_cost`: Computes exact total cost = `(price_per_day * rental_days) + (travel_distance * price_per_km)`.
+4. `calculate_compatibility`: Executes Python deterministic scoring across 8 weighted metrics.
+5. `recommend_vehicle`: Ranks top candidate and top 3 alternatives, structuring output payload.
+6. `create_booking`: Executes direct reservation in MongoDB collection `bookings`.
 
 ---
 
-## 🚀 How to Run the Application
+## 6. Architecture & Vercel Multi-Service Deployment
 
-### 1. Prerequisites
-- Python 3.10+ installed
-- Node.js v18+ installed
+```
+                            GitHub Repository
+                                    |
+                                    v
+                             Vercel Deployment
+                                    |
+            +-----------------------+-----------------------+
+            |                                               |
+            v                                               v
+     React Frontend                                  FastAPI Backend
+    (Vite / Tailwind)                                (/api/* Serverless)
+            |                                               |
+            +-----------------------+-----------------------+
+                                    |
+                                    v
+                           MongoDB Atlas & Gemini API
+```
 
-### 2. Environment Setup
-Rename or copy `.env.example` to `.env` in both root and `backend/`:
+Root `vercel.json` routing configuration:
+```json
+{
+  "services": {
+    "frontend": { "root": "frontend/", "framework": "vite" },
+    "backend": { "root": "backend/", "framework": "fastapi", "entrypoint": "main:app" }
+  },
+  "rewrites": [
+    { "source": "/api", "destination": { "service": "backend" } },
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
+}
+```
 
+---
+
+## 7. Technology Stack
+- **Frontend**: React 19, Vite, Tailwind CSS, Lucide React, Recharts, Axios
+- **Backend**: Python 3.13, FastAPI, Pydantic, PyMongo, PyJWT, Passlib, Uvicorn
+- **AI Engine**: Google Gemini API (`google-genai`), Custom Tool Registry
+- **Database**: MongoDB Atlas / PyMongo
+- **Deployment**: Vercel (Unified Frontend + Backend Project)
+
+---
+
+## 8. Database Design (MongoDB Collections)
+- `users`: User profiles, email, password hash, role (`user`/`admin`)
+- `vehicles`: Fleet vehicles, specs, daily rate, per-km rate, seating capacity, comfort level, availability
+- `bookings`: Rental reservations, start/end dates, distance, total cost, status (`Confirmed`/`Cancelled`)
+- `ai_recommendations`: Cached recommendation payloads
+- `agent_logs`: Step-by-step AI Agent execution traces for presentation
+
+---
+
+## 9. Realistic Indian Vehicles Dataset
+1. **Toyota Innova Crysta** (MUV, 7 Seats, Diesel, Manual, High Comfort)
+2. **Toyota Fortuner 4x4** (SUV, 7 Seats, Diesel, Automatic, Luxury)
+3. **Kia Carens** (MUV, 7 Seats, Petrol, Automatic, High Comfort)
+4. **Kia Seltos** (SUV, 5 Seats, Petrol, Automatic, High Comfort)
+5. **Hyundai Creta** (SUV, 5 Seats, Petrol, Automatic, High Comfort)
+6. **Hyundai Alcazar** (SUV, 7 Seats, Diesel, Automatic, High Comfort)
+7. **Tata Harrier** (SUV, 5 Seats, Diesel, Automatic, High Comfort)
+8. **Tata Nexon** (SUV, 5 Seats, Petrol, Manual, Standard)
+9. **Tata Nexon EV** (SUV, 5 Seats, Electric, Automatic, High Comfort)
+10. **Mahindra XUV700** (SUV, 7 Seats, Diesel, Automatic, Luxury)
+11. **Mahindra Scorpio-N** (SUV, 7 Seats, Diesel, Automatic, High Comfort)
+12. **MG Hector** (SUV, 5 Seats, Petrol, Automatic, High Comfort)
+13. **Maruti Swift** (Hatchback, 5 Seats, Petrol, Manual, Standard)
+14. **Honda City** (Sedan, 5 Seats, Petrol, Automatic, High Comfort)
+15. **Toyota Camry Hybrid** (Sedan, 5 Seats, Hybrid, Automatic, Luxury)
+
+---
+
+## 10. Installation & Setup
+
+```bash
+# 1. Clone repository
+git clone https://github.com/shahil2007-source/AI-Vehicle-rental-management-system.git
+cd AI-Vehicle-rental-management-system
+
+# 2. Install backend Python dependencies
+cd backend
+pip install -r requirements.txt
+
+# 3. Install frontend Node dependencies
+cd ../frontend
+npm install
+```
+
+---
+
+## 11. Environment Variables
+
+Create `.env` inside `backend/`:
 ```env
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/vehicle_rental?retryWrites=true&w=majority
 GEMINI_API_KEY=your_gemini_api_key_here
-MONGODB_URI=mongodb://localhost:27017/vrm_db
-JWT_SECRET=super-secret-vrm-ai-jwt-key-2026
+JWT_SECRET=your_jwt_secret_key_here
+PORT=8000
+FRONTEND_URL=http://localhost:5173
 ```
-*(Note: If `GEMINI_API_KEY` or `MONGODB_URI` is left blank, the application automatically uses the local RAG engine and file-backed database so it works out of the box with zero setup).*
 
-### 3. Run Backend (FastAPI)
+Create `.env` inside `frontend/`:
+```env
+VITE_API_URL=http://localhost:8000/api
+```
+
+---
+
+## 12. Local Development
+
+Start FastAPI Backend Server (Terminal 1):
 ```bash
 cd backend
-python3 -m pip install -r requirements.txt
 python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
-API Documentation: `http://localhost:8000/docs`
 
-### 4. Run Frontend (React + Vite)
+Start React Vite Frontend Server (Terminal 2):
 ```bash
 cd frontend
-npm install
-npm run dev
+npm run dev -- --port 5173
 ```
-Frontend URL: `http://localhost:5173`
+
+Access Applications:
+- **Frontend App**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:8000](http://localhost:8000)
+- **Health Check**: [http://localhost:8000/api/health](http://localhost:8000/api/health)
+- **Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-## 🎭 Project Demonstration Flow (Step-by-Step)
+## 13. Vercel Deployment Guide
 
-1. Open `http://localhost:5173`.
-2. Click **"AI Vehicle Finder"** in the navigation bar.
-3. Submit the journey parameters:
-   - **Passengers**: 5
-   - **Budget**: ₹4,000 / day
-   - **Trip Type**: Family Trip
-   - **Approx Distance**: 350 km
-   - **Vehicle Type**: SUV
-4. Click **"🤖 Find Best Vehicle"**.
-5. Observe the animated execution modal detailing the tool stack execution.
-6. View the generated **Best Match Card** (e.g., **Toyota Innova Crysta** with **92% AI Match Score**).
-7. Inspect the **"Why this vehicle?"** reasons and the **Estimated Rental Cost Breakdown in ₹**.
-8. Click **"Rent Now"** to auto-fill the booking page and confirm the booking.
-9. Note the generated Booking ID (e.g. `VRM-2026-00125`).
-10. Open **My Bookings Dashboard** to track your booking status, or switch to **Admin Portal** (`admin@vrm.com` / `admin123`) to view live KPIs and Recharts analytics.
+1. Push repository to GitHub.
+2. Import repository in [Vercel Dashboard](https://vercel.com).
+3. Set environment variables in Vercel settings:
+   - `MONGODB_URI`
+   - `GEMINI_API_KEY`
+   - `JWT_SECRET`
+4. Deploy project. Vercel will automatically build the Vite static assets and expose FastAPI backend under `/api/*`.
 
 ---
 
-## 🔑 Demo Login Credentials
-
-- **Customer Account**: `user@vrm.com` / `admin123`
-- **Admin Account**: `admin@vrm.com` / `admin123`
+## 14. MongoDB Atlas Setup
+1. Create a free M0 Cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Create Database User under Database Access.
+3. Allow Network Access (`0.0.0.0/0`).
+4. Copy Connection String into `MONGODB_URI`.
 
 ---
 
-## 🔬 Fundamentals of AI Evaluation Points
+## 15. Gemini API Setup
+1. Obtain an API key from [Google AI Studio](https://aistudio.google.com/).
+2. Add key to `GEMINI_API_KEY` environment variable in backend.
 
-- **Problem Realism**: Solves complex multi-attribute decision problems in transportation.
-- **Genuine AI Agent Architecture**: 6 discrete tools called programmatically.
-- **Explainability**: Clear transparency on compatibility score components and natural language rationale.
-- **Production Quality**: Modern glassmorphism dark mode UI, responsive layout, Recharts data visualization, and robust error handling.
+---
+
+## 16. API Documentation
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Service & database health status |
+| `GET` | `/api/vehicles` | List fleet with filters & search |
+| `GET` | `/api/vehicles/{id}` | Get vehicle details by ID |
+| `POST` | `/api/ai/recommend` | Trigger 6-tool AI Agent recommendation |
+| `POST` | `/api/ai/chat` | AI chat assistant endpoint |
+| `POST` | `/api/bookings` | Create new reservation |
+| `GET` | `/api/bookings` | List active user bookings |
+| `DELETE` | `/api/bookings/{id}` | Cancel reservation |
+| `GET` | `/api/admin/dashboard-stats` | Fleet occupancy & revenue metrics |
+| `GET` | `/api/admin/agent-logs` | Retrieve step-by-step AI Agent execution traces |
+
+---
+
+## 17. College Presentation Demonstration Instructions
+
+1. Open **AI Agent Activity** page (`/activity`) during faculty presentation.
+2. Navigate to **AI Vehicle Finder** (`/finder`).
+3. Enter test trip parameters:
+   - Passengers: `7`
+   - Budget/Day: `₹4,000`
+   - Trip Type: `Outstation Road Trip`
+   - Travel Distance: `500 km`
+   - Vehicle Class: `SUV`
+   - Fuel: `Diesel`
+4. Click **"Find My Vehicle"**.
+5. Highlight the live step-by-step tool execution progress animation (`search_vehicles` → `check_availability` → `calculate_rental_cost` → `calculate_compatibility` → `recommend_vehicle`).
+6. Point to the **Compatibility Score Gauge** (e.g. 99.9/100) and explain that the score is calculated by deterministic Python math, while Gemini LLM synthesizes the natural language rationale.
+7. Click **"Book This Recommended Vehicle"** to execute reservation.
+8. Switch to **AI Agent Activity** logs to present the recorded trace log JSON.
