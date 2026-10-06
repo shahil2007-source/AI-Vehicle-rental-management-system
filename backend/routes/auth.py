@@ -9,8 +9,18 @@ from models.user import UserRegister, UserLogin, UserResponse, Token
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Temporary in-memory user store if DB offline
+# Preset Admin Credentials
+ADMIN_EMAIL = "tshahil2007@gmail.com"
+ADMIN_PASSWORD_HASH = pwd_context.hash("admin")
+
 IN_MEMORY_USERS = {
+    ADMIN_EMAIL: {
+        "id": "usr_admin_tshahil",
+        "full_name": "Shahil Kumar (Admin)",
+        "email": ADMIN_EMAIL,
+        "password_hash": ADMIN_PASSWORD_HASH,
+        "role": "admin"
+    },
     "admin@vehiclerental.com": {
         "id": "usr_admin",
         "full_name": "System Admin",
@@ -19,6 +29,24 @@ IN_MEMORY_USERS = {
         "role": "admin"
     }
 }
+
+def ensure_admin_user():
+    """Ensure tshahil2007@gmail.com admin account exists in MongoDB Atlas if connected."""
+    db = get_database()
+    if db is not None:
+        try:
+            existing = db["users"].find_one({"email": ADMIN_EMAIL})
+            if not existing:
+                admin_doc = {
+                    "id": "usr_admin_tshahil",
+                    "full_name": "Shahil Kumar (Admin)",
+                    "email": ADMIN_EMAIL,
+                    "password_hash": ADMIN_PASSWORD_HASH,
+                    "role": "admin"
+                }
+                db["users"].insert_one(admin_doc)
+        except Exception:
+            pass
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -62,12 +90,14 @@ def register_user(user: UserRegister):
 
 @router.post("/login", response_model=Token)
 def login_user(credentials: UserLogin):
+    ensure_admin_user()
     db = get_database()
     user_doc = None
     
     if db is not None:
         user_doc = db["users"].find_one({"email": credentials.email})
-    else:
+    
+    if not user_doc:
         user_doc = IN_MEMORY_USERS.get(credentials.email)
 
     if not user_doc or not pwd_context.verify(credentials.password, user_doc["password_hash"]):
@@ -81,8 +111,8 @@ def login_user(credentials: UserLogin):
 @router.get("/me")
 def get_current_user():
     return {
-        "id": "usr_demo",
-        "full_name": "Demo User",
-        "email": "user@example.com",
-        "role": "user"
+        "id": "usr_admin_tshahil",
+        "full_name": "Shahil Kumar (Admin)",
+        "email": ADMIN_EMAIL,
+        "role": "admin"
     }
